@@ -1,0 +1,28 @@
+# v로 시작하는 태그(예: v1.0.0)를 올리면 GitHub 릴리스를 만들고 확장 압축 파일을 첨부한다.
+# 필요한 파일: dist/TabCustomizer-<버전>.zip, release-notes/v<버전>.md
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          VERSION="${TAG#v}"
+          ASSET="dist/TabCustomizer-${VERSION}.zip"
+          NOTES="release-notes/${TAG}.md"
+          test -f "$ASSET" || { echo "::error::$ASSET 파일이 없습니다"; exit 1; }
+          test -f "$NOTES" || { echo "::error::$NOTES 파일이 없습니다"; exit 1; }
+          gh release create "$TAG" "$ASSET" --title "Tab Customizer ${VERSION}" --notes-file "$NOTES" --verify-tag
